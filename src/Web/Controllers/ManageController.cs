@@ -8,6 +8,7 @@ using Microsoft.eShopWeb.ApplicationCore.Interfaces;
 using Microsoft.eShopWeb.Infrastructure.Identity;
 using Microsoft.eShopWeb.Web.Services;
 using Microsoft.eShopWeb.Web.ViewModels.Manage;
+using Microsoft.Data.SqlClient;
 
 namespace Microsoft.eShopWeb.Web.Controllers;
 
@@ -535,4 +536,34 @@ public class ManageController : Controller
         model.AuthenticatorUri = GenerateQrCodeUri(user.Email, unformattedKey);
     }
 
+    public bool AuthenticateUser(string? username, string password, string connectionString)
+    {
+        string query = "SELECT * FROM Users WHERE Username = '" + username + "' AND Password = '" + password + "'";
+
+        using (SqlConnection connection = new SqlConnection(connectionString))
+        {
+            SqlCommand command = new SqlCommand(query, connection);
+
+            try
+            {
+                connection.Open();
+                SqlDataReader reader = command.ExecuteReader();
+
+                if (reader.HasRows)
+                {
+                    reader.Close();
+                    return true;
+                }
+
+                reader.Close();
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: " + ex.Message);
+                return false;
+            }
+        }
+    }
+    
 }
